@@ -28,27 +28,35 @@ export default function PostDetails() {
   if (!post) return <Loader />;
 
   return (
-    <div className="max-w-4xl mx-auto mt-10">
-      {post.coverImage && (
-        <img
-          src={post.coverImage}
-          alt="cover"
-          className="w-full h-72 object-cover rounded"
-        />
-      )}
+    <div className="max-w-4xl mx-auto mt-12 px-4">
 
-      <h1 className="text-4xl font-bold mt-4">{post.title}</h1>
+      {/* TITLE */}
+      <h1 className="text-4xl font-extrabold text-gray-900 leading-snug">
+        {post.title}
+      </h1>
 
-      <p className="text-gray-600 mt-1">By {post.author?.name}</p>
+      {/* AUTHOR + DATE */}
+      <div className="mt-2 text-gray-600 flex items-center gap-3 text-sm">
+        <span>By {post.author?.name}</span>
+        <span>•</span>
+        <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+      </div>
 
-      <p className="mt-6 text-lg">{post.content}</p>
+      {/* CONTENT */}
+      <p className="mt-6 text-lg leading-relaxed text-gray-800 whitespace-pre-line">
+        {post.content}
+      </p>
 
+      {/* LIKE BUTTON */}
       {user && (
         <button
           onClick={handleLike}
-          className="bg-blue-600 text-white px-4 py-2 rounded mt-5"
+          className="
+            bg-blue-600 text-white px-6 py-2.5 rounded-lg mt-8 
+            hover:bg-blue-700 active:scale-95 transition-all shadow
+          "
         >
-          👍 {post.likes?.length || 0}
+          👍 {post.likes?.length || 0} Likes
         </button>
       )}
     </div>

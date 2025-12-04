@@ -8,7 +8,7 @@ export default function Footer() {
     <footer className="relative mt-20">
 
       {/* Soft Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 
+      <div className="absolute inset-0 bg-linear-to-br from-purple-100 via-pink-100 to-blue-100 
                       opacity-70 blur-2xl rounded-t-3xl"></div>
 
       <div className="relative max-w-7xl mx-auto px-6 py-12">
@@ -91,7 +91,7 @@ export default function Footer() {
 
         {/* Divider */}
         <div className="text-center mt-10 pt-6 border-t border-gray-300 text-gray-600 text-sm">
-          © {year} Blogify — Made with 💜 by Muhammad Nouman
+          © {year} Blogify — Made with 💜 by nomiii013
         </div>
 
       </div>

@@ -5,6 +5,8 @@ import { Toaster } from "react-hot-toast";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";   // ✅ NEW
+import ScrollToTop from "./components/ScrollToTop";
+
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -40,6 +42,8 @@ export default function App() {
         
         <div className="max-w-7xl mx-auto px-4">
 
+        <ScrollToTop />
+        
           <Routes>
 
             {/* ============================= */}

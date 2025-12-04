@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+
 /* Custom Animations */
 .animate-fade {
   animation: fadeIn 0.2s ease-out;

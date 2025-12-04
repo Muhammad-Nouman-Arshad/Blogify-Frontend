@@ -7,8 +7,13 @@ import { motion, AnimatePresence } from "framer-motion";
 export default function Home() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // ⭐ New Smart Search States
+  const [searchText, setSearchText] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+
   const [filter, setFilter] = useState("All");
-  const [search, setSearch] = useState("");
 
   const categories = [
     "All",
@@ -21,6 +26,7 @@ export default function Home() {
     "Entertainment",
   ];
 
+  // Load all posts initially
   useEffect(() => {
     api
       .get("/posts")
@@ -28,25 +34,48 @@ export default function Home() {
       .finally(() => setLoading(false));
   }, []);
 
-  // ⭐ Improved filtering logic for MULTIPLE categories
-  const filteredPosts = useMemo(() => {
-    let data = [...posts];
+  // ⭐ Debounced Search Handler
+  let timer;
+  const handleSearch = (value) => {
+    setSearchText(value);
+    clearTimeout(timer);
 
-    // Search filter
-    if (search.trim() !== "") {
-      data = data.filter((p) =>
-        p.title.toLowerCase().includes(search.toLowerCase()) ||
-        p.content.toLowerCase().includes(search.toLowerCase())
-      );
+    timer = setTimeout(() => {
+      fetchSearchResults(value);
+    }, 400); // delay for AI-like typing search
+  };
+
+  // ⭐ Call Backend Smart Search API
+  const fetchSearchResults = async (value) => {
+    if (!value.trim()) {
+      setSearchResults([]);
+      return;
     }
 
-    // Category filter
+    setIsSearching(true);
+
+    const res = await api.get(`/posts/search/query?q=${value}`);
+
+    if (res.data.results) {
+      setSearchResults(res.data.results);
+    } else if (res.data.related) {
+      setSearchResults(res.data.related);
+    }
+
+    setIsSearching(false);
+  };
+
+  // ⭐ Choose which posts to show (search results > normal posts)
+  const list = useMemo(() => {
+    let data = searchResults.length > 0 ? searchResults : posts;
+
+    // Apply category filter after search
     if (filter !== "All") {
       data = data.filter((p) => (p.categories || []).includes(filter));
     }
 
     return data;
-  }, [posts, filter, search]);
+  }, [posts, searchResults, filter]);
 
   if (loading) return <Loader />;
 
@@ -61,16 +90,16 @@ export default function Home() {
         className="text-center max-w-4xl mx-auto px-4"
       >
         <h1
-  className="
-    text-6xl font-extrabold 
-    bg-gradient-to-r from-[#8A2BE2] via-[#FF00CC] to-[#FF1493]
-    bg-clip-text text-transparent
-    drop-shadow-[0_4px_10px_rgba(255,0,150,0.35)]
-    tracking-tight leading-tight
-  "
->
-  Welcome to Blogify
-</h1>
+          className="
+            text-6xl font-extrabold 
+            bg-gradient-to-r from-[#8A2BE2] via-[#FF00CC] to-[#FF1493]
+            bg-clip-text text-transparent
+            drop-shadow-[0_4px_10px_rgba(255,0,150,0.35)]
+            tracking-tight leading-tight
+          "
+        >
+          Welcome to Blogify
+        </h1>
 
         <p className="text-gray-600 text-lg mt-4 leading-relaxed">
           Dive into a world of ideas, stories, and expert insights crafted by creators like you.
@@ -85,13 +114,19 @@ export default function Home() {
         >
           <input
             type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={searchText}
+            onChange={(e) => handleSearch(e.target.value)}
             placeholder="Search articles, topics, authors..."
             className="w-full max-w-lg px-5 py-3 rounded-2xl shadow-md border border-gray-200 
                        focus:ring-2 focus:ring-purple-400 focus:outline-none transition bg-white/80 backdrop-blur"
           />
         </motion.div>
+
+        {isSearching && (
+          <p className="text-purple-500 mt-2 text-sm animate-pulse">
+            Searching...
+          </p>
+        )}
       </motion.div>
 
       {/* ================= CATEGORY FILTER ================= */}
@@ -124,8 +159,8 @@ export default function Home() {
         className="max-w-7xl mx-auto px-4 mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-3"
       >
         <AnimatePresence>
-          {filteredPosts.length > 0 ? (
-            filteredPosts.map((post) => (
+          {list.length > 0 ? (
+            list.map((post) => (
               <motion.div
                 key={post._id}
                 layout
@@ -139,6 +174,7 @@ export default function Home() {
               </motion.div>
             ))
           ) : (
+            // Empty State
             <motion.div
               key="empty"
               initial={{ opacity: 0 }}
