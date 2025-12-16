@@ -36,9 +36,25 @@ export default function PostDetails() {
       </h1>
 
       {/* AUTHOR + DATE */}
-      <div className="mt-2 text-gray-600 flex items-center gap-3 text-sm">
-        <span>By {post.author?.name}</span>
+      <div className="mt-3 flex items-center gap-3 text-sm text-gray-600">
+
+        {/* AVATAR (same as PostCard) */}
+        <img
+          src={`https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=${post?.author?.name}`}
+          alt="avatar"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = "/default-avatar.png";
+          }}
+          className="w-10 h-10 rounded-full shadow-sm object-cover bg-gray-200"
+        />
+
+        {/* AUTHOR */}
+        <span className="font-medium text-gray-800">{post.author?.name}</span>
+
         <span>•</span>
+
+        {/* DATE */}
         <span>{new Date(post.createdAt).toLocaleDateString()}</span>
       </div>
 

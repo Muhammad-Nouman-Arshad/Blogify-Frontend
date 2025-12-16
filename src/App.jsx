@@ -4,9 +4,9 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
 import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";   // ✅ NEW
+import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
-
+import WhatsAppButton from "./components/WhatsAppButton";  // ✅ NEW
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -29,37 +29,26 @@ import AdminAnalytics from "./pages/AdminAnalytics";
 export default function App() {
   return (
     <Router>
-
-      {/* NAVBAR (fixed top) */}
+      {/* NAVBAR */}
       <Navbar />
 
       {/* TOASTER */}
       <Toaster position="top-right" />
 
       {/* MAIN CONTENT */}
-      <main className="pt-24 pb-10 min-h-screen"> 
-        {/* pt-24 ensures content is not hidden behind navbar */}
-        
+      <main className="pt-24 pb-10 min-h-screen">
         <div className="max-w-7xl mx-auto px-4">
+          <ScrollToTop />
 
-        <ScrollToTop />
-        
           <Routes>
-
-            {/* ============================= */}
-            {/* 🌍 PUBLIC ROUTES              */}
-            {/* ============================= */}
+            {/* PUBLIC ROUTES */}
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
-            {/* Single Post */}
             <Route path="/post/:id" element={<SinglePost />} />
 
-
-            {/* ============================= */}
-            {/* 🔒 USER AUTH ROUTES           */}
-            {/* ============================= */}
+            {/* USER ROUTES */}
             <Route
               path="/create"
               element={
@@ -78,11 +67,7 @@ export default function App() {
               }
             />
 
-
-            {/* ============================= */}
-            {/* 👑 ADMIN ROUTES               */}
-            {/* ============================= */}
-
+            {/* ADMIN ROUTES */}
             <Route
               path="/admin"
               element={
@@ -118,15 +103,15 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-
           </Routes>
-
         </div>
       </main>
 
-      {/* FOOTER (always visible) */}
-      <Footer />   {/* ✅ NEW */}
+      {/* FOOTER */}
+      <Footer />
 
+      {/* ✅ FLOATING WHATSAPP BUTTON */}
+      <WhatsAppButton />
     </Router>
   );
 }

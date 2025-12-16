@@ -1,5 +1,11 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { Heart, MessageCircle, Share2 } from "lucide-react";
+import { useContext, useState } from "react";
+import Avatar from "./Avatar";
+import api from "../services/api";
+import { AuthContext } from "../context/AuthContext";
+import toast from "react-hot-toast";
 
 const getCategoryColors = (category) => {
   const map = {
@@ -15,6 +21,45 @@ const getCategoryColors = (category) => {
 };
 
 export default function PostCard({ post }) {
+  const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
+
+  const authorName = post?.author?.name || "User";
+
+  const [likes, setLikes] = useState(post.likes || []);
+  const isLiked = user && likes.includes(user._id);
+
+  // ================= LIKE HANDLER =================
+  const handleLike = async () => {
+    if (!user) {
+      toast.error("Login to like posts");
+      return;
+    }
+
+    try {
+      const res = await api.post(`/posts/${post._id}/like`);
+      setLikes(res.data.post.likes);
+    } catch {
+      toast.error("Failed to like post");
+    }
+  };
+
+  // ================= SHARE =================
+  const handleShare = async () => {
+    const url = `${window.location.origin}/post/${post._id}`;
+
+    if (navigator.share) {
+      await navigator.share({
+        title: post.title,
+        text: post.content.slice(0, 80),
+        url,
+      });
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied");
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 25 }}
@@ -22,88 +67,92 @@ export default function PostCard({ post }) {
       whileHover={{ scale: 1.02 }}
       transition={{ type: "spring", stiffness: 120, damping: 14 }}
       className="
-        rounded-3xl bg-white/70 backdrop-blur-xl 
+        rounded-3xl bg-white
         shadow-[0_8px_30px_rgba(0,0,0,0.12)]
-        border border-white/40 
-        overflow-hidden 
-        hover:shadow-[0_12px_40px_rgba(0,0,0,0.18)]
-        hover:-translate-y-1 
+        border border-gray-200
+        hover:shadow-[0_14px_45px_rgba(0,0,0,0.18)]
         transition-all duration-500
-        h-full flex flex-col justify-between
+        h-full flex flex-col
       "
     >
-      <div className="p-6 flex flex-col flex-grow">
+      <div className="p-6 flex flex-col h-full">
 
-        {/* CATEGORIES */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          {(post.categories || ["General"]).map((cat, idx) => (
-            <span
-              key={idx}
-              className={`
-                px-3 py-1 text-xs font-semibold rounded-full text-white shadow-md 
-                bg-gradient-to-r ${getCategoryColors(cat)}
-              `}
-            >
-              {cat}
-            </span>
-          ))}
+        {/* CATEGORY */}
+        <div className="flex gap-2 mb-4">
+          {(post.categories?.length ? post.categories : ["General"]).map(
+            (cat, idx) => (
+              <span
+                key={idx}
+                className={`px-3 py-1 text-xs font-semibold rounded-full text-white
+                bg-gradient-to-r ${getCategoryColors(cat)}`}
+              >
+                {cat}
+              </span>
+            )
+          )}
         </div>
 
         {/* TITLE */}
-        <motion.h2 
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="
-            text-[22px] font-extrabold text-gray-800 mb-3 
-            line-clamp-2 min-h-[68px]
-          "
-        >
+        <h2 className="text-[22px] font-extrabold text-gray-800 line-clamp-2">
           {post.title}
-        </motion.h2>
+        </h2>
 
-        {/* DESCRIPTION */}
-        <p className="text-gray-600 text-sm mb-5 leading-relaxed line-clamp-3 min-h-[66px]">
-          {post.content.substring(0, 150)}...
+        {/* CONTENT */}
+        <p className="mt-3 text-gray-600 text-sm line-clamp-3">
+          {(post.content || "").slice(0, 150)}...
         </p>
 
-        {/* AUTHOR + DATE */}
-        <div className="flex items-center justify-between mb-6 text-sm">
+        {/* AUTHOR */}
+        <div className="flex justify-between items-center mt-5 text-sm">
           <div className="flex items-center gap-2">
-            <img
-              src={`https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=${post?.author?.name}`}
-              alt="avatar"
-              onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = "/default-avatar.png";}}
-              className="w-8 h-8 rounded-full shadow-sm object-cover bg-gray-200"
-            />
-            <span className="font-medium text-gray-700">{post?.author?.name}</span>
+            <Avatar name={authorName} size={32} />
+            <span className="font-medium text-gray-700">{authorName}</span>
           </div>
-
           <span className="text-gray-500">
             {new Date(post.createdAt).toLocaleDateString()}
           </span>
         </div>
 
-        {/* READ MORE BUTTON */}
-        <motion.div whileHover={{ x: 3 }} className="mt-auto">
-          <Link
-            to={`/post/${post._id}`}
-            className="
-              block w-full text-center py-3 rounded-xl font-semibold 
-              bg-gradient-to-r from-blue-600 to-purple-600 
-              text-white shadow-md 
-              hover:shadow-xl hover:brightness-110 
-              active:scale-95 
-              transition-all duration-300 
-              flex items-center justify-center gap-2
-            "
-          >
-            Read More →
-          </Link>
-        </motion.div>
+        {/* ACTIONS */}
+        <div className="flex justify-between border-t pt-4 mt-auto">
 
+          {/* LIKE */}
+          <button
+            onClick={handleLike}
+            className={`flex items-center gap-1 text-sm transition
+              ${isLiked ? "text-red-500" : "text-gray-600 hover:text-red-500"}`}
+          >
+            <Heart className={`w-4 h-4 ${isLiked ? "fill-red-500" : ""}`} />
+            {likes.length}
+          </button>
+
+          {/* COMMENT */}
+          <button
+            onClick={() => navigate(`/post/${post._id}`)}
+            className="flex items-center gap-1 text-gray-600 hover:text-blue-600 text-sm"
+          >
+            <MessageCircle className="w-4 h-4" />
+            Comment
+          </button>
+
+          {/* SHARE */}
+          <button
+            onClick={handleShare}
+            className="flex items-center gap-1 text-gray-600 hover:text-purple-600 text-sm"
+          >
+            <Share2 className="w-4 h-4" />
+            Share
+          </button>
+        </div>
+
+        {/* READ MORE */}
+        <Link
+          to={`/post/${post._id}`}
+          className="mt-4 block w-full text-center py-3 rounded-xl font-semibold
+          bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+        >
+          Read More →
+        </Link>
       </div>
     </motion.div>
   );

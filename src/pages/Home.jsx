@@ -1,199 +1,211 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import api from "../services/api";
 import PostCard from "../components/PostCard";
 import Loader from "../components/Loader";
+import SearchBar from "../components/SearchBar";
 import { motion, AnimatePresence } from "framer-motion";
+import { ChevronRight, ChevronLeft } from "lucide-react";
+
+// ================= CONSTANTS =================
+const CATEGORIES = [
+  "All",
+  "General",
+  "Technology",
+  "Lifestyle",
+  "Business",
+  "Design",
+  "Sports",
+  "Entertainment",
+];
+
+const POSTS_PER_PAGE = 9;
 
 export default function Home() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ⭐ New Smart Search States
-  const [searchText, setSearchText] = useState("");
+  // SEARCH
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
 
+  // FILTER
   const [filter, setFilter] = useState("All");
 
-  const categories = [
-    "All",
-    "General",
-    "Technology",
-    "Lifestyle",
-    "Business",
-    "Design",
-    "Sports",
-    "Entertainment",
-  ];
+  // PAGINATION
+  const [page, setPage] = useState(1);
 
-  // Load all posts initially
+  // ================= FETCH POSTS =================
   useEffect(() => {
-    api
-      .get("/posts")
-      .then((res) => setPosts(res.data))
-      .finally(() => setLoading(false));
+    const fetchPosts = async () => {
+      try {
+        const res = await api.get("/posts");
+        setPosts(res.data);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
   }, []);
 
-  // ⭐ Debounced Search Handler
-  let timer;
+  // ================= SEARCH =================
+  const debouncedSearch = useCallback(() => {
+    let timer;
+    return async (value) => {
+      clearTimeout(timer);
+
+      timer = setTimeout(async () => {
+        if (!value.trim()) {
+          setSearchResults([]);
+          setPage(1);
+          return;
+        }
+
+        setIsSearching(true);
+
+        try {
+          const res = await api.get(`/posts/search/query?q=${value}`);
+          setSearchResults(res.data.results || []);
+          setPage(1);
+        } finally {
+          setIsSearching(false);
+        }
+      }, 400);
+    };
+  }, [])();
+
   const handleSearch = (value) => {
-    setSearchText(value);
-    clearTimeout(timer);
-
-    timer = setTimeout(() => {
-      fetchSearchResults(value);
-    }, 400); // delay for AI-like typing search
+    debouncedSearch(value);
   };
 
-  // ⭐ Call Backend Smart Search API
-  const fetchSearchResults = async (value) => {
-    if (!value.trim()) {
-      setSearchResults([]);
-      return;
-    }
+  // ================= FINAL FILTERED LIST =================
+  const filteredList = useMemo(() => {
+    let data = searchResults.length ? searchResults : posts;
 
-    setIsSearching(true);
-
-    const res = await api.get(`/posts/search/query?q=${value}`);
-
-    if (res.data.results) {
-      setSearchResults(res.data.results);
-    } else if (res.data.related) {
-      setSearchResults(res.data.related);
-    }
-
-    setIsSearching(false);
-  };
-
-  // ⭐ Choose which posts to show (search results > normal posts)
-  const list = useMemo(() => {
-    let data = searchResults.length > 0 ? searchResults : posts;
-
-    // Apply category filter after search
     if (filter !== "All") {
-      data = data.filter((p) => (p.categories || []).includes(filter));
+      data = data.filter((p) =>
+        (p.categories || []).includes(filter)
+      );
     }
 
     return data;
   }, [posts, searchResults, filter]);
 
+  // ================= PAGINATED DATA =================
+  const paginatedPosts = useMemo(() => {
+    const start = (page - 1) * POSTS_PER_PAGE;
+    return filteredList.slice(start, start + POSTS_PER_PAGE);
+  }, [filteredList, page]);
+
+  const totalPages = Math.ceil(filteredList.length / POSTS_PER_PAGE);
+
   if (loading) return <Loader />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-gray-100 pt-10 pb-20">
+    <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-gray-100 pt-10 pb-24">
 
-      {/* ================= HERO SECTION ================= */}
-      <motion.div
-        initial={{ opacity: 0, y: -30 }}
+      {/* ================= HERO ================= */}
+      <motion.section
+        initial={{ opacity: 0, y: -40 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7 }}
+        transition={{ duration: 0.8 }}
         className="text-center max-w-4xl mx-auto px-4"
       >
-        <h1
-          className="
-            text-6xl font-extrabold 
-            bg-gradient-to-r from-[#8A2BE2] via-[#FF00CC] to-[#FF1493]
-            bg-clip-text text-transparent
-            drop-shadow-[0_4px_10px_rgba(255,0,150,0.35)]
-            tracking-tight leading-tight
-          "
-        >
-          Welcome to Blogify
+        <h1 className="
+          text-6xl font-extrabold tracking-tight
+          bg-gradient-to-r from-purple-600 via-pink-500 to-rose-500
+          bg-clip-text text-transparent
+        ">
+          Blogify
         </h1>
 
-        <p className="text-gray-600 text-lg mt-4 leading-relaxed">
-          Dive into a world of ideas, stories, and expert insights crafted by creators like you.
+        <p className="text-gray-600 text-lg mt-4">
+          Discover powerful ideas, insightful stories, and meaningful content.
         </p>
 
-        {/* SEARCH BAR */}
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-          className="mt-8 flex justify-center"
-        >
-          <input
-            type="text"
-            value={searchText}
-            onChange={(e) => handleSearch(e.target.value)}
-            placeholder="Search articles, topics, authors..."
-            className="w-full max-w-lg px-5 py-3 rounded-2xl shadow-md border border-gray-200 
-                       focus:ring-2 focus:ring-purple-400 focus:outline-none transition bg-white/80 backdrop-blur"
+        <div className="mt-10">
+          <SearchBar
+            loading={isSearching}
+            suggestions={searchResults.slice(0, 5).map(p => p.title)}
+            onSearch={handleSearch}
           />
-        </motion.div>
-
-        {isSearching && (
-          <p className="text-purple-500 mt-2 text-sm animate-pulse">
-            Searching...
-          </p>
-        )}
-      </motion.div>
+        </div>
+      </motion.section>
 
       {/* ================= CATEGORY FILTER ================= */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-        className="flex flex-wrap justify-center gap-3 mt-10 px-4"
-      >
-        {categories.map((cat) => (
-          <motion.button
+      <div className="flex flex-wrap justify-center gap-3 mt-12 px-4">
+        {CATEGORIES.map((cat) => (
+          <button
             key={cat}
-            whileTap={{ scale: 0.9 }}
-            whileHover={{ scale: 1.05 }}
-            onClick={() => setFilter(cat)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all border cursor-pointer ${
+            onClick={() => {
+              setFilter(cat);
+              setPage(1);
+            }}
+            className={`px-5 py-2 rounded-full text-sm font-medium border transition ${
               filter === cat
-                ? "bg-purple-600 text-white border-purple-600 shadow-lg"
+                ? "bg-purple-600 text-white border-purple-600"
                 : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
             }`}
           >
             {cat}
-          </motion.button>
+          </button>
         ))}
-      </motion.div>
+      </div>
 
       {/* ================= POSTS GRID ================= */}
       <motion.div
         layout
-        className="max-w-7xl mx-auto px-4 mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-3"
+        className="max-w-7xl mx-auto px-4 mt-16 grid gap-10 sm:grid-cols-2 lg:grid-cols-3"
       >
-        <AnimatePresence>
-          {list.length > 0 ? (
-            list.map((post) => (
-              <motion.div
-                key={post._id}
-                layout
-                initial={{ opacity: 0, y: 25 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.35 }}
-                className="hover:-translate-y-1 transition-transform duration-300"
-              >
-                <PostCard post={post} />
-              </motion.div>
-            ))
-          ) : (
-            // Empty State
+        <AnimatePresence mode="wait">
+          {paginatedPosts.map((post) => (
             <motion.div
-              key="empty"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="col-span-full text-center text-gray-600 mt-10"
+              key={post._id}
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -40 }}
+              transition={{ duration: 0.35 }}
             >
-              <motion.img
-                src="https://illustrations.popsy.co/gray/work-from-home.svg"
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.4 }}
-                className="w-56 mx-auto opacity-80"
-              />
-              <p className="mt-4 text-lg font-medium">No posts found</p>
+              <PostCard post={post} />
             </motion.div>
-          )}
+          ))}
         </AnimatePresence>
       </motion.div>
+
+      {/* ================= PAGINATION CONTROLS ================= */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-6 mt-20">
+
+          <button
+            disabled={page === 1}
+            onClick={() => setPage(p => p - 1)}
+            className="
+              p-3 rounded-full border shadow
+              disabled:opacity-40
+              hover:bg-gray-100 transition
+            "
+          >
+            <ChevronLeft />
+          </button>
+
+          <span className="text-sm text-gray-600 font-medium">
+            Page {page} of {totalPages}
+          </span>
+
+          <button
+            disabled={page === totalPages}
+            onClick={() => setPage(p => p + 1)}
+            className="
+              p-3 rounded-full border shadow
+              disabled:opacity-40
+              hover:bg-gray-100 transition
+            "
+          >
+            <ChevronRight />
+          </button>
+
+        </div>
+      )}
     </div>
   );
 }
