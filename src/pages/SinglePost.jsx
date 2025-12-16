@@ -6,6 +6,7 @@ import { AuthContext } from "../context/AuthContext";
 import Avatar from "../components/Avatar";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
+import { Pencil, Trash2, Share2 } from "lucide-react";
 
 export default function SinglePost() {
   const { id } = useParams();
@@ -19,7 +20,7 @@ export default function SinglePost() {
   const [commentText, setCommentText] = useState("");
   const [commentLoading, setCommentLoading] = useState(false);
   const [likeLoading, setLikeLoading] = useState(false);
-  const [showComments, setShowComments] = useState(false); // ✅ toggle
+  const [showComments, setShowComments] = useState(false);
 
   const isAuthor =
     user && post && (user._id === post.author?._id || user.role === "admin");
@@ -64,6 +65,26 @@ export default function SinglePost() {
       toast.error("Failed to like");
     } finally {
       setLikeLoading(false);
+    }
+  };
+
+  // ================= SHARE =================
+  const handleShare = async () => {
+    const url = window.location.href;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: post.title,
+          text: post.content.slice(0, 100),
+          url,
+        });
+      } catch {
+        /* user cancelled */
+      }
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied to clipboard");
     }
   };
 
@@ -133,8 +154,8 @@ export default function SinglePost() {
           {post.title}
         </motion.h1>
 
-        {/* ================= AUTHOR ================= */}
-        <div className="flex items-center justify-between mt-4">
+        {/* ================= AUTHOR + ACTIONS ================= */}
+        <div className="flex items-center justify-between mt-6">
           <div className="flex items-center gap-3 text-gray-600">
             <Avatar name={post.author?.name} size={40} />
             <span className="font-medium">{post.author?.name}</span>
@@ -143,18 +164,31 @@ export default function SinglePost() {
           </div>
 
           {isAuthor && (
-            <div className="flex gap-3">
+            <div className="flex items-center gap-2 bg-white/80 backdrop-blur px-3 py-2 rounded-2xl shadow">
               <button
                 onClick={() => navigate(`/edit/${post._id}`)}
-                className="text-sm text-blue-600 hover:underline"
+                className="
+                  flex items-center gap-2 px-4 py-2 rounded-full
+                  bg-blue-50 text-blue-600 border border-blue-200
+                  text-sm font-medium
+                  hover:bg-blue-600 hover:text-white
+                  active:scale-95 transition
+                "
               >
-                Edit
+                <Pencil size={16} /> Edit
               </button>
+
               <button
                 onClick={deletePost}
-                className="text-sm text-red-600 hover:underline"
+                className="
+                  flex items-center gap-2 px-4 py-2 rounded-full
+                  bg-red-50 text-red-600 border border-red-200
+                  text-sm font-medium
+                  hover:bg-red-600 hover:text-white
+                  active:scale-95 transition
+                "
               >
-                Delete
+                <Trash2 size={16} /> Delete
               </button>
             </div>
           )}
@@ -168,14 +202,14 @@ export default function SinglePost() {
         </div>
 
         {/* ================= ACTION BUTTONS ================= */}
-        <div className="flex flex-wrap gap-4 mt-10">
+        <div className="flex flex-wrap gap-4 mt-12">
 
           {/* LIKE */}
           <button
             onClick={toggleLike}
             disabled={likeLoading}
             className="
-              group flex items-center gap-2 px-6 py-2.5 rounded-full
+              flex items-center gap-2 px-6 py-2.5 rounded-full
               bg-white border border-gray-200
               text-gray-700 font-medium
               shadow-sm hover:shadow-md
@@ -183,15 +217,14 @@ export default function SinglePost() {
               active:scale-95 transition-all
             "
           >
-            <span className="text-lg group-hover:scale-110 transition">❤️</span>
-            {post.likes?.length || 0}
+            ❤️ {post.likes?.length || 0}
           </button>
 
-          {/* COMMENT TOGGLE */}
+          {/* COMMENT */}
           <button
-            onClick={() => setShowComments((prev) => !prev)}
+            onClick={() => setShowComments((p) => !p)}
             className="
-              group flex items-center gap-2 px-6 py-2.5 rounded-full
+              flex items-center gap-2 px-6 py-2.5 rounded-full
               bg-white border border-gray-200
               text-gray-700 font-medium
               shadow-sm hover:shadow-md
@@ -199,24 +232,17 @@ export default function SinglePost() {
               active:scale-95 transition-all
             "
           >
-            <span className="text-lg group-hover:scale-110 transition">💬</span>
-            {comments.length}
+            💬 {comments.length}
             <span className="text-xs opacity-60">
               {showComments ? "Hide" : "Show"}
             </span>
           </button>
 
-          {/* SHARE */}
+          {/* SHARE (RESTORED) */}
           <button
-            onClick={() =>
-              navigator.share?.({
-                title: post.title,
-                text: post.content.slice(0, 100),
-                url: window.location.href,
-              })
-            }
+            onClick={handleShare}
             className="
-              group flex items-center gap-2 px-6 py-2.5 rounded-full
+              flex items-center gap-2 px-6 py-2.5 rounded-full
               bg-white border border-gray-200
               text-gray-700 font-medium
               shadow-sm hover:shadow-md
@@ -224,13 +250,11 @@ export default function SinglePost() {
               active:scale-95 transition-all
             "
           >
-            <span className="text-lg group-hover:scale-110 transition">🔗</span>
-            Share
+            <Share2 size={18} /> Share
           </button>
-
         </div>
 
-        {/* ================= COMMENTS (TOGGLE) ================= */}
+        {/* ================= COMMENTS ================= */}
         {showComments && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -244,23 +268,14 @@ export default function SinglePost() {
                 <textarea
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
-                  className="
-                    w-full p-4 border border-gray-300 rounded-xl
-                    focus:ring-2 focus:ring-blue-400 outline-none shadow-sm
-                  "
+                  className="w-full p-4 border rounded-xl focus:ring-2 focus:ring-blue-400"
                   rows="3"
                   placeholder="Write a comment..."
                 />
                 <button
                   onClick={addComment}
                   disabled={commentLoading}
-                  className="
-                    mt-3 px-6 py-2.5 rounded-xl
-                    bg-gradient-to-r from-blue-600 to-purple-600
-                    text-white font-medium
-                    shadow-md hover:shadow-lg
-                    active:scale-95 transition
-                  "
+                  className="mt-3 px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium"
                 >
                   {commentLoading ? "Posting..." : "Post Comment"}
                 </button>
@@ -270,17 +285,8 @@ export default function SinglePost() {
             )}
 
             <div className="mt-8 space-y-4">
-              {comments.length === 0 && (
-                <p className="text-gray-500">No comments yet.</p>
-              )}
-
               {comments.map((c) => (
-                <motion.div
-                  key={c._id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="p-4 bg-gray-100 rounded-xl shadow"
-                >
+                <div key={c._id} className="p-4 bg-gray-100 rounded-xl shadow">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Avatar name={c.user?.name} size={32} />
@@ -299,7 +305,7 @@ export default function SinglePost() {
                   </div>
 
                   <p className="mt-2 text-gray-700">{c.text}</p>
-                </motion.div>
+                </div>
               ))}
             </div>
           </motion.div>
