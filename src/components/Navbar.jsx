@@ -39,10 +39,9 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Animated Active Link Styles
   const activeLink = ({ isActive }) =>
-    `relative px-1 py-1 font-medium transition-all duration-300 group
-    ${isActive ? "text-blue-600" : "text-gray-700 hover:text-blue-600"}`;
+    `block text-[15px] font-medium transition-all duration-300
+     ${isActive ? "text-blue-600" : "text-gray-700 hover:text-blue-600"}`;
 
   // Avatar
   const Avatar = ({ name }) => {
@@ -65,91 +64,61 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-5">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <NavLink to="/" className="flex items-center">
-            <h1 className="text-3xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text tracking-tight">
+          <NavLink to="/">
+            <h1 className="text-3xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">
               Blogify
             </h1>
           </NavLink>
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-7 text-[15px]">
-            <NavLink to="/" className={activeLink}>
-              <span
-                className="after:absolute after:left-0 after:-bottom-0.5 after:h-[2px] after:w-full after:bg-blue-600 after:scale-x-0
-                group-hover:after:scale-x-100 transition-transform duration-300"
-              >
-                Home
-              </span>
-            </NavLink>
+            <NavLink to="/" className={activeLink}>Home</NavLink>
 
-            {/* ADMIN MENU */}
             {user?.role === "admin" && (
               <div className="relative" ref={adminMenuRef}>
                 <button
                   onClick={() => setOpenAdminMenu((p) => !p)}
-                  className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow hover:brightness-110 transition-all"
+                  className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow"
                 >
                   Admin ▾
                 </button>
 
                 {openAdminMenu && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white shadow-xl rounded-lg border animate-fadeIn">
-                    <NavLink to="/admin" className="block px-4 py-2 hover:bg-gray-100 text-sm">
-                      📊 Dashboard
-                    </NavLink>
-                    <NavLink to="/admin/users" className="block px-4 py-2 hover:bg-gray-100 text-sm">
-                      👥 Manage Users
-                    </NavLink>
-                    <NavLink to="/admin/posts" className="block px-4 py-2 hover:bg-gray-100 text-sm">
-                      📝 Manage Posts
-                    </NavLink>
-                    <NavLink to="/admin/analytics" className="block px-4 py-2 hover:bg-gray-100 text-sm">
-                      📈 Analytics
-                    </NavLink>
+                  <div className="absolute right-0 mt-2 w-56 bg-white shadow-xl rounded-lg border">
+                    <NavLink to="/admin" className="block px-4 py-2 hover:bg-gray-100">📊 Dashboard</NavLink>
+                    <NavLink to="/admin/users" className="block px-4 py-2 hover:bg-gray-100">👥 Users</NavLink>
+                    <NavLink to="/admin/posts" className="block px-4 py-2 hover:bg-gray-100">📝 Posts</NavLink>
+                    <NavLink to="/admin/analytics" className="block px-4 py-2 hover:bg-gray-100">📈 Analytics</NavLink>
                   </div>
                 )}
               </div>
             )}
 
-            {/* Authorized */}
             {user ? (
               <div className="flex items-center gap-5">
-                <NavLink to="/create" className={activeLink}>
-                  <span
-                    className="after:absolute after:left-0 after:-bottom-0.5 after:h-[2px] after:w-full after:bg-blue-600 after:scale-x-0
-                    group-hover:after:scale-x-100 transition-transform duration-300"
-                  >
-                    Create
-                  </span>
-                </NavLink>
+                <NavLink to="/create" className={activeLink}>Create</NavLink>
 
-                <NavLink to="/profile" className={activeLink}>
-                  <div className="flex items-center gap-2">
-                    <Avatar  name={user.name.toUpperCase()} />
-                    <span>{user.name}</span> 
-                  </div>
+                <NavLink to="/profile" className="flex items-center gap-2">
+                  <Avatar name={user.name} />
+                  <span>{user.name}</span>
                 </NavLink>
 
                 <button
                   onClick={logout}
-                  className="px-4 py-1.5 rounded-lg bg-red-500 text-white hover:bg-red-600 transition shadow"
+                  className="px-4 py-1.5 rounded-lg bg-red-500 text-white hover:bg-red-600 transition"
                 >
                   Logout
                 </button>
               </div>
             ) : (
               <>
-                <NavLink to="/login" className={activeLink}>
-                  Login
-                </NavLink>
-                <NavLink to="/register" className={activeLink}>
-                  Register
-                </NavLink>
+                <NavLink to="/login" className={activeLink}>Login</NavLink>
+                <NavLink to="/register" className={activeLink}>Register</NavLink>
               </>
             )}
           </div>
 
-          {/* Mobile Button */}
+          {/* Mobile Toggle */}
           <button
             className="md:hidden text-3xl text-gray-700"
             onClick={() => setOpenMobile((p) => !p)}
@@ -158,56 +127,66 @@ export default function Navbar() {
           </button>
         </div>
 
-        {/* Mobile Menu */}
+        {/* ================= MOBILE MENU (UPDATED) ================= */}
         <div
-          className={`md:hidden overflow-hidden transition-[max-height] duration-300 ease-in-out ${
-            openMobile ? "max-h-[550px]" : "max-h-0"
+          className={`md:hidden overflow-hidden transition-[max-height] duration-300 ${
+            openMobile ? "max-h-[700px]" : "max-h-0"
           }`}
         >
-          <div className="py-4 space-y-3 border-t mt-2">
-            <NavLink to="/" className={activeLink}>
-              Home
-            </NavLink>
+          <div className="mt-3 mx-3 rounded-2xl bg-white shadow-lg border p-4 space-y-5">
 
-            {user?.role === "admin" && (
-              <div className="pl-2 space-y-1">
-                <p className="font-semibold text-blue-700">Admin</p>
-                <NavLink to="/admin" className="block pl-4 py-1">📊 Dashboard</NavLink>
-                <NavLink to="/admin/users" className="block pl-4 py-1">👥 Manage Users</NavLink>
-                <NavLink to="/admin/posts" className="block pl-4 py-1">📝 Manage Posts</NavLink>
-                <NavLink to="/admin/analytics" className="block pl-4 py-1">📈 Analytics</NavLink>
+            {/* User Info */}
+            {user && (
+              <div className="flex items-center gap-3 pb-3 border-b">
+                <Avatar name={user.name} />
+                <div>
+                  <p className="font-semibold text-gray-800">{user.name}</p>
+                  <p className="text-xs text-gray-500 capitalize">{user.role}</p>
+                </div>
               </div>
             )}
 
-            {user ? (
-              <>
-                <NavLink to="/create" className={activeLink}>
-                  Create
-                </NavLink>
-                <NavLink to="/profile" className={activeLink}>
-                  <div className="flex items-center gap-2">
-                    <Avatar name={user.name} /> {user.name}
-                  </div>
-                </NavLink>
+            {/* Links */}
+            <div className="space-y-3">
+              <NavLink to="/" className={activeLink}>Home</NavLink>
+              {user && <NavLink to="/create" className={activeLink}>Create Post</NavLink>}
+              {user && <NavLink to="/profile" className={activeLink}>Profile</NavLink>}
+            </div>
+
+            {/* Admin */}
+            {user?.role === "admin" && (
+              <div className="pt-3 border-t space-y-2">
+                <p className="text-sm font-semibold text-blue-600">Admin Panel</p>
+                <NavLink to="/admin" className="block pl-2 text-sm">📊 Dashboard</NavLink>
+                <NavLink to="/admin/users" className="block pl-2 text-sm">👥 Users</NavLink>
+                <NavLink to="/admin/posts" className="block pl-2 text-sm">📝 Posts</NavLink>
+                <NavLink to="/admin/analytics" className="block pl-2 text-sm">📈 Analytics</NavLink>
+              </div>
+            )}
+
+            {/* Auth Buttons */}
+            <div className="pt-3 border-t">
+              {user ? (
                 <button
-                  onClick={() => logout()}
-                  className="w-full bg-red-500 text-white py-2 rounded-lg"
+                  onClick={logout}
+                  className="w-full bg-red-500 text-white py-2 rounded-xl font-medium"
                 >
                   Logout
                 </button>
-              </>
-            ) : (
-              <>
-                <NavLink to="/login" className={activeLink}>
-                  Login
-                </NavLink>
-                <NavLink to="/register" className={activeLink}>
-                  Register
-                </NavLink>
-              </>
-            )}
+              ) : (
+                <div className="flex gap-3">
+                  <NavLink to="/login" className="flex-1 text-center py-2 rounded-xl border font-medium">
+                    Login
+                  </NavLink>
+                  <NavLink to="/register" className="flex-1 text-center py-2 rounded-xl bg-blue-600 text-white font-medium">
+                    Register
+                  </NavLink>
+                </div>
+              )}
+            </div>
           </div>
         </div>
+        {/* ================= END MOBILE MENU ================= */}
       </div>
     </nav>
   );

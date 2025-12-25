@@ -21,17 +21,14 @@ const CATEGORIES = [
 const POSTS_PER_PAGE = 9;
 
 export default function Home() {
+  // ================= STATE =================
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // SEARCH
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  // FILTER
   const [filter, setFilter] = useState("All");
-
-  // PAGINATION
   const [page, setPage] = useState(1);
 
   // ================= FETCH POSTS =================
@@ -39,7 +36,20 @@ export default function Home() {
     const fetchPosts = async () => {
       try {
         const res = await api.get("/posts");
-        setPosts(res.data);
+
+        // ✅ NORMALIZE RESPONSE
+        const safePosts = Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data?.posts)
+          ? res.data.posts
+          : Array.isArray(res.data?.results)
+          ? res.data.results
+          : [];
+
+        setPosts(safePosts);
+      } catch (err) {
+        console.error("Fetch posts failed:", err);
+        setPosts([]);
       } finally {
         setLoading(false);
       }
@@ -48,10 +58,10 @@ export default function Home() {
     fetchPosts();
   }, []);
 
-  // ================= SEARCH =================
+  // ================= SEARCH (DEBOUNCED) =================
   const debouncedSearch = useCallback(() => {
     let timer;
-    return async (value) => {
+    return (value) => {
       clearTimeout(timer);
 
       timer = setTimeout(async () => {
@@ -65,8 +75,16 @@ export default function Home() {
 
         try {
           const res = await api.get(`/posts/search/query?q=${value}`);
-          setSearchResults(res.data.results || []);
+
+          const safeResults = Array.isArray(res.data?.results)
+            ? res.data.results
+            : [];
+
+          setSearchResults(safeResults);
           setPage(1);
+        } catch (err) {
+          console.error("Search failed:", err);
+          setSearchResults([]);
         } finally {
           setIsSearching(false);
         }
@@ -78,9 +96,11 @@ export default function Home() {
     debouncedSearch(value);
   };
 
-  // ================= FINAL FILTERED LIST =================
+  // ================= FILTERED DATA =================
   const filteredList = useMemo(() => {
     let data = searchResults.length ? searchResults : posts;
+
+    if (!Array.isArray(data)) return [];
 
     if (filter !== "All") {
       data = data.filter((p) =>
@@ -91,14 +111,17 @@ export default function Home() {
     return data;
   }, [posts, searchResults, filter]);
 
-  // ================= PAGINATED DATA =================
+  // ================= PAGINATION =================
   const paginatedPosts = useMemo(() => {
+    if (!Array.isArray(filteredList)) return [];
+
     const start = (page - 1) * POSTS_PER_PAGE;
     return filteredList.slice(start, start + POSTS_PER_PAGE);
   }, [filteredList, page]);
 
   const totalPages = Math.ceil(filteredList.length / POSTS_PER_PAGE);
 
+  // ================= UI =================
   if (loading) return <Loader />;
 
   return (
@@ -111,11 +134,7 @@ export default function Home() {
         transition={{ duration: 0.8 }}
         className="text-center max-w-4xl mx-auto px-4"
       >
-        <h1 className="
-          text-6xl font-extrabold tracking-tight
-          bg-gradient-to-r from-purple-600 via-pink-500 to-rose-500
-          bg-clip-text text-transparent
-        ">
+        <h1 className="text-6xl font-extrabold tracking-tight bg-gradient-to-r from-purple-600 via-pink-500 to-rose-500 bg-clip-text text-transparent">
           Blogify
         </h1>
 
@@ -157,7 +176,7 @@ export default function Home() {
         layout
         className="max-w-7xl mx-auto px-4 mt-16 grid gap-10 sm:grid-cols-2 lg:grid-cols-3"
       >
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
           {paginatedPosts.map((post) => (
             <motion.div
               key={post._id}
@@ -172,18 +191,13 @@ export default function Home() {
         </AnimatePresence>
       </motion.div>
 
-      {/* ================= PAGINATION CONTROLS ================= */}
+      {/* ================= PAGINATION ================= */}
       {totalPages > 1 && (
         <div className="flex justify-center items-center gap-6 mt-20">
-
           <button
             disabled={page === 1}
             onClick={() => setPage(p => p - 1)}
-            className="
-              p-3 rounded-full border shadow
-              disabled:opacity-40
-              hover:bg-gray-100 transition
-            "
+            className="p-3 rounded-full border shadow disabled:opacity-40 hover:bg-gray-100"
           >
             <ChevronLeft />
           </button>
@@ -195,15 +209,10 @@ export default function Home() {
           <button
             disabled={page === totalPages}
             onClick={() => setPage(p => p + 1)}
-            className="
-              p-3 rounded-full border shadow
-              disabled:opacity-40
-              hover:bg-gray-100 transition
-            "
+            className="p-3 rounded-full border shadow disabled:opacity-40 hover:bg-gray-100"
           >
             <ChevronRight />
           </button>
-
         </div>
       )}
     </div>
