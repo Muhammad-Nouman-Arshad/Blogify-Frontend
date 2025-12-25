@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import api from "../services/api";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
@@ -8,26 +8,42 @@ export default function Register() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
 
-  const navigate = useNavigate(); // <<--- IMPORTANT
+  const navigate = useNavigate();
+
+  // ✅ DEBUG: check API URL once (IMPORTANT)
+  useEffect(() => {
+    console.log("API URL:", import.meta.env.VITE_API_URL);
+  }, []);
 
   const registerUser = async (e) => {
     e.preventDefault();
+
+    // 🔒 Safety check (avoid undefined API issues)
+    if (!import.meta.env.VITE_API_URL) {
+      toast.error("API URL not configured. Check .env file.");
+      return;
+    }
+
     setLoading(true);
 
     try {
       const payload = {
-        ...form,
+        name: form.name,
+        email: form.email,
+        password: form.password,
         role: form.email === "admin@gmail.com" ? "admin" : "user",
       };
 
+      // ✅ Correct POST request
       await api.post("/auth/register", payload);
 
       toast.success("Account created successfully!");
 
       setForm({ name: "", email: "", password: "" });
 
-      navigate("/login"); // <<--- REDIRECT HERE
+      navigate("/login");
     } catch (err) {
+      console.error(err);
       toast.error(err.response?.data?.message || "Registration failed");
     } finally {
       setLoading(false);
@@ -99,7 +115,10 @@ export default function Register() {
 
           <p className="text-center text-gray-500 text-sm">
             Already have an account?{" "}
-            <Link to="/login" className="text-blue-600 font-medium hover:underline">
+            <Link
+              to="/login"
+              className="text-blue-600 font-medium hover:underline"
+            >
               Login
             </Link>
           </p>
