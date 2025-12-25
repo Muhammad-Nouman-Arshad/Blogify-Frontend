@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../services/api";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
+import Avatar from "../components/Avatar"; // ✅ USE REUSABLE AVATAR
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
@@ -92,15 +93,13 @@ export default function AdminUsers() {
                 className="border-b hover:bg-gray-50"
               >
                 <td className="py-3 px-4 flex items-center gap-3">
-                  <img
-                    src={`https://api.dicebear.com/7.x/notable/svg?seed=${user.name}`}
-                    alt="avatar"
-                    className="w-10 h-10 rounded-full border"
-                  />
+                  <Avatar name={user.name} size={40} />
                   <span className="font-medium">{user.name}</span>
                 </td>
 
-                <td className="py-3 px-4 text-gray-700">{user.email}</td>
+                <td className="py-3 px-4 text-gray-700 break-all">
+                  {user.email}
+                </td>
 
                 <td className="py-3 px-4">
                   <span
@@ -151,11 +150,7 @@ export default function AdminUsers() {
             className="bg-white border rounded-xl shadow p-4"
           >
             <div className="flex items-center gap-3">
-              <img
-                src={`https://api.dicebear.com/7.x/notable/svg?seed=${user.name}`}
-                alt="avatar"
-                className="w-12 h-12 rounded-full border"
-              />
+              <Avatar name={user.name} size={48} />
               <div>
                 <p className="font-semibold text-gray-800 break-words">
                   {user.name}
@@ -166,7 +161,7 @@ export default function AdminUsers() {
               </div>
             </div>
 
-            <div className="mt-3 flex items-center justify-between">
+            <div className="mt-3">
               <span
                 className={`px-3 py-1 rounded-full text-xs font-semibold ${
                   user.role === "admin"
