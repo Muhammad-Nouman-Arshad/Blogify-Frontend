@@ -23,7 +23,9 @@ export default function SinglePost() {
   const [showComments, setShowComments] = useState(false);
 
   const isAuthor =
-    user && post && (user._id === post.author?._id || user.role === "admin");
+    user &&
+    post &&
+    (user._id === post.author?._id || user.role === "admin");
 
   // ================= FETCH POST + COMMENTS =================
   useEffect(() => {
@@ -46,12 +48,13 @@ export default function SinglePost() {
 
   if (loading) return <Loader />;
 
-  if (!post)
+  if (!post) {
     return (
-      <div className="text-center text-xl mt-10 text-red-600">
+      <div className="text-center text-xl mt-20 text-red-600">
         Post not found!
       </div>
     );
+  }
 
   // ================= LIKE =================
   const toggleLike = async () => {
@@ -62,7 +65,7 @@ export default function SinglePost() {
       const res = await api.post(`/posts/${post._id}/like`);
       setPost(res.data.post);
     } catch {
-      toast.error("Failed to like");
+      toast.error("Failed to like post");
     } finally {
       setLikeLoading(false);
     }
@@ -79,9 +82,7 @@ export default function SinglePost() {
           text: post.content.slice(0, 100),
           url,
         });
-      } catch {
-        /* user cancelled */
-      }
+      } catch {}
     } else {
       await navigator.clipboard.writeText(url);
       toast.success("Link copied to clipboard");
@@ -104,8 +105,8 @@ export default function SinglePost() {
   // ================= ADD COMMENT =================
   const addComment = async () => {
     if (!commentText.trim()) return toast.error("Comment cannot be empty");
-    setCommentLoading(true);
 
+    setCommentLoading(true);
     try {
       const res = await api.post(`/comments/post/${post._id}`, {
         text: commentText,
@@ -125,13 +126,12 @@ export default function SinglePost() {
       await api.delete(`/comments/${commentId}`);
       setComments(comments.filter((c) => c._id !== commentId));
     } catch {
-      toast.error("Delete failed");
+      toast.error("Failed to delete comment");
     }
   };
 
   return (
-    <div className="min-h-screen pb-20 bg-gradient-to-b from-white to-gray-50">
-
+    <div className="min-h-screen bg-gray-50 pb-24">
       {/* ================= HERO IMAGE ================= */}
       {post.coverImage && (
         <motion.img
@@ -139,118 +139,85 @@ export default function SinglePost() {
           alt={post.title}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="w-full h-[420px] object-cover shadow"
+          className="w-full h-64 sm:h-80 md:h-[420px] object-cover"
         />
       )}
 
-      <div className="max-w-4xl mx-auto px-4">
-
+      <div className="max-w-4xl mx-auto px-4 sm:px-6">
         {/* ================= TITLE ================= */}
         <motion.h1
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-4xl sm:text-5xl font-extrabold mt-10"
+          className="text-3xl sm:text-4xl md:text-5xl font-extrabold mt-8"
         >
           {post.title}
         </motion.h1>
 
         {/* ================= AUTHOR + ACTIONS ================= */}
-        <div className="flex items-center justify-between mt-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-6">
           <div className="flex items-center gap-3 text-gray-600">
             <Avatar name={post.author?.name} size={40} />
-            <span className="font-medium">{post.author?.name}</span>
-            <span>•</span>
-            <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+            <div className="text-sm">
+              <p className="font-semibold">{post.author?.name}</p>
+              <p>{new Date(post.createdAt).toLocaleDateString()}</p>
+            </div>
           </div>
 
           {isAuthor && (
-            <div className="flex items-center gap-2 bg-white/80 backdrop-blur px-3 py-2 rounded-2xl shadow">
+            <div className="flex gap-2">
               <button
                 onClick={() => navigate(`/edit/${post._id}`)}
-                className="
-                  flex items-center gap-2 px-4 py-2 rounded-full
-                  bg-blue-50 text-blue-600 border border-blue-200
-                  text-sm font-medium
-                  hover:bg-blue-600 hover:text-white
-                  active:scale-95 transition
-                "
+                className="flex items-center gap-1 px-4 py-2 rounded-full text-sm
+                bg-blue-50 text-blue-600 border border-blue-200
+                hover:bg-blue-600 hover:text-white transition"
               >
-                <Pencil size={16} /> Edit
+                <Pencil size={14} /> Edit
               </button>
 
               <button
                 onClick={deletePost}
-                className="
-                  flex items-center gap-2 px-4 py-2 rounded-full
-                  bg-red-50 text-red-600 border border-red-200
-                  text-sm font-medium
-                  hover:bg-red-600 hover:text-white
-                  active:scale-95 transition
-                "
+                className="flex items-center gap-1 px-4 py-2 rounded-full text-sm
+                bg-red-50 text-red-600 border border-red-200
+                hover:bg-red-600 hover:text-white transition"
               >
-                <Trash2 size={16} /> Delete
+                <Trash2 size={14} /> Delete
               </button>
             </div>
           )}
         </div>
 
         {/* ================= CONTENT ================= */}
-        <div className="prose prose-lg max-w-none mt-10">
+        <div className="prose prose-base sm:prose-lg max-w-none mt-10">
           {post.content.split("\n").map((line, i) => (
             <p key={i}>{line}</p>
           ))}
         </div>
 
         {/* ================= ACTION BUTTONS ================= */}
-        <div className="flex flex-wrap gap-4 mt-12">
-
-          {/* LIKE */}
+        <div className="flex flex-wrap gap-3 mt-10">
           <button
             onClick={toggleLike}
             disabled={likeLoading}
-            className="
-              flex items-center gap-2 px-6 py-2.5 rounded-full
-              bg-white border border-gray-200
-              text-gray-700 font-medium
-              shadow-sm hover:shadow-md
-              hover:bg-pink-50 hover:text-pink-600
-              active:scale-95 transition-all
-            "
+            className="px-5 py-2 rounded-full bg-white border shadow-sm
+            hover:bg-pink-50 hover:text-pink-600 transition"
           >
             ❤️ {post.likes?.length || 0}
           </button>
 
-          {/* COMMENT */}
           <button
-            onClick={() => setShowComments((p) => !p)}
-            className="
-              flex items-center gap-2 px-6 py-2.5 rounded-full
-              bg-white border border-gray-200
-              text-gray-700 font-medium
-              shadow-sm hover:shadow-md
-              hover:bg-blue-50 hover:text-blue-600
-              active:scale-95 transition-all
-            "
+            onClick={() => setShowComments(!showComments)}
+            className="px-5 py-2 rounded-full bg-white border shadow-sm
+            hover:bg-blue-50 hover:text-blue-600 transition"
           >
             💬 {comments.length}
-            <span className="text-xs opacity-60">
-              {showComments ? "Hide" : "Show"}
-            </span>
           </button>
 
-          {/* SHARE (RESTORED) */}
           <button
             onClick={handleShare}
-            className="
-              flex items-center gap-2 px-6 py-2.5 rounded-full
-              bg-white border border-gray-200
-              text-gray-700 font-medium
-              shadow-sm hover:shadow-md
-              hover:bg-purple-50 hover:text-purple-600
-              active:scale-95 transition-all
-            "
+            className="px-5 py-2 rounded-full bg-white border shadow-sm
+            hover:bg-purple-50 hover:text-purple-600 transition"
           >
-            <Share2 size={18} /> Share
+            <Share2 size={16} />
           </button>
         </div>
 
@@ -259,23 +226,23 @@ export default function SinglePost() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-16 border-t pt-10"
+            className="mt-14 border-t pt-8"
           >
-            <h2 className="text-3xl font-bold mb-6">Comments</h2>
+            <h2 className="text-2xl font-bold mb-4">Comments</h2>
 
             {user ? (
               <>
                 <textarea
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
-                  className="w-full p-4 border rounded-xl focus:ring-2 focus:ring-blue-400"
                   rows="3"
+                  className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-400"
                   placeholder="Write a comment..."
                 />
                 <button
                   onClick={addComment}
                   disabled={commentLoading}
-                  className="mt-3 px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium"
+                  className="mt-3 px-6 py-2 rounded-xl bg-blue-600 text-white"
                 >
                   {commentLoading ? "Posting..." : "Post Comment"}
                 </button>
@@ -284,27 +251,33 @@ export default function SinglePost() {
               <p className="text-gray-500">Login to comment</p>
             )}
 
-            <div className="mt-8 space-y-4">
+            <div className="mt-6 space-y-4">
               {comments.map((c) => (
-                <div key={c._id} className="p-4 bg-gray-100 rounded-xl shadow">
+                <div
+                  key={c._id}
+                  className="p-4 bg-white rounded-xl shadow-sm"
+                >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Avatar name={c.user?.name} size={32} />
-                      <p className="font-semibold">{c.user.name}</p>
+                      <p className="font-semibold text-sm">
+                        {c.user?.name}
+                      </p>
                     </div>
 
                     {(user &&
-                      (user._id === c.user._id || user.role === "admin")) && (
+                      (user._id === c.user?._id ||
+                        user.role === "admin")) && (
                       <button
                         onClick={() => deleteComment(c._id)}
-                        className="text-sm text-red-500 hover:underline"
+                        className="text-xs text-red-500 hover:underline"
                       >
                         Delete
                       </button>
                     )}
                   </div>
 
-                  <p className="mt-2 text-gray-700">{c.text}</p>
+                  <p className="mt-2 text-gray-700 text-sm">{c.text}</p>
                 </div>
               ))}
             </div>
