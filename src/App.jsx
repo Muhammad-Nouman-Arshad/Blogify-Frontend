@@ -3,24 +3,27 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
+// Layout
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
-import WhatsAppButton from "./components/WhatsAppButton";  // ✅ NEW
+import WhatsAppButton from "./components/WhatsAppButton";
 
+// Auth
 import ProtectedRoute from "./components/ProtectedRoute";
 
-// Public pages
+// Public Pages
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import SinglePost from "./pages/SinglePost";
 
-// User pages
+// User Pages
 import CreatePost from "./pages/CreatePost";
+import EditPost from "./pages/EditPost"; // ✅ NEW
 import Profile from "./pages/Profile";
 
-// Admin pages
+// Admin Pages
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from "./pages/AdminUsers";
 import AdminPosts from "./pages/AdminPosts";
@@ -41,19 +44,27 @@ export default function App() {
           <ScrollToTop />
 
           <Routes>
-            {/* PUBLIC ROUTES */}
+            {/* ================= PUBLIC ROUTES ================= */}
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-
             <Route path="/post/:id" element={<SinglePost />} />
 
-            {/* USER ROUTES */}
+            {/* ================= USER ROUTES ================= */}
             <Route
               path="/create"
               element={
                 <ProtectedRoute>
                   <CreatePost />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/edit/:id"
+              element={
+                <ProtectedRoute>
+                  <EditPost />
                 </ProtectedRoute>
               }
             />
@@ -67,7 +78,7 @@ export default function App() {
               }
             />
 
-            {/* ADMIN ROUTES */}
+            {/* ================= ADMIN ROUTES ================= */}
             <Route
               path="/admin"
               element={
@@ -110,7 +121,7 @@ export default function App() {
       {/* FOOTER */}
       <Footer />
 
-      {/* ✅ FLOATING WHATSAPP BUTTON */}
+      {/* FLOATING WHATSAPP BUTTON */}
       <WhatsAppButton />
     </Router>
   );
