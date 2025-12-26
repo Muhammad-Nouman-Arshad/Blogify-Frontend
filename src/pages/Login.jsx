@@ -1,4 +1,3 @@
-// src/pages/Login.jsx
 import { useState, useContext, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -13,7 +12,7 @@ export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
 
-  // If already logged in (and auth check finished) redirect to home
+  // 🔁 If already logged in, redirect
   useEffect(() => {
     if (!authLoading && user) {
       navigate("/");
@@ -27,21 +26,19 @@ export default function Login() {
     try {
       const res = await api.post("/auth/login", form);
 
-      // store token + user in context (AuthContext handles localStorage)
-      login(res.data);
+      // ✅ IMPORTANT: pass ONLY token
+      login(res.data.token);
 
       toast.success("Logged in successfully!");
-      navigate("/"); // redirect after login
+      navigate("/");
     } catch (err) {
       const msg = err?.response?.data?.message;
-      if (msg) toast.error(msg);
-      else toast.error("Login failed");
+      toast.error(msg || "Login failed");
     } finally {
       setLoading(false);
     }
   };
 
-  // while initial auth check running, show nothing (prevents flicker)
   if (authLoading) return null;
 
   return (
@@ -66,11 +63,12 @@ export default function Login() {
             <input
               type="email"
               value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, email: e.target.value })
+              }
               required
-              className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md 
-                         text-gray-700 focus:outline-none focus:ring-2 
-                         focus:ring-blue-400 transition"
+              className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md
+                         focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
 
@@ -79,11 +77,12 @@ export default function Login() {
             <input
               type="password"
               value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, password: e.target.value })
+              }
               required
-              className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md 
-                         text-gray-700 focus:outline-none focus:ring-2 
-                         focus:ring-blue-400 transition"
+              className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md
+                         focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
 
@@ -91,15 +90,18 @@ export default function Login() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.95 }}
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded-md text-sm font-medium 
+            className="w-full bg-blue-600 text-white py-2 rounded-md
                        hover:bg-blue-700 transition disabled:bg-gray-400"
           >
             {loading ? "Please wait..." : "Login"}
           </motion.button>
 
           <p className="text-center text-gray-500 text-sm">
-            Don't have an account?{" "}
-            <Link to="/register" className="text-blue-600 font-medium hover:underline">
+            Don&apos;t have an account?{" "}
+            <Link
+              to="/register"
+              className="text-blue-600 font-medium hover:underline"
+            >
               Register
             </Link>
           </p>

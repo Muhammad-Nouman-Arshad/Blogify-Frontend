@@ -18,11 +18,11 @@ export default function EditPost() {
       try {
         const res = await api.get(`/posts/${id}`);
 
-        // ✅ AUTHORIZATION CHECK
-        if (
-          res.data.author._id !== user._id &&
-          user.role !== "admin"
-        ) {
+        const isAuthor =
+          res.data.author._id.toString() === user._id.toString();
+        const isAdmin = user.role === "admin";
+
+        if (!isAuthor && !isAdmin) {
           toast.error("You are not allowed to edit this post");
           navigate("/");
           return;
