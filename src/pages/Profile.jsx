@@ -6,6 +6,12 @@ import Avatar from "../components/Avatar";
 import DashboardStats from "../components/DashboardStats";
 import { motion } from "framer-motion";
 
+// ================= NAME FORMATTER =================
+const formatName = (name = "") => {
+  if (!name) return "User";
+  return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+};
+
 export default function Profile() {
   const { user } = useContext(AuthContext);
   const [myPosts, setMyPosts] = useState([]);
@@ -63,10 +69,10 @@ export default function Profile() {
           flex items-center gap-6
         "
       >
-        {/* ✅ AVATAR – ALWAYS RENDER */}
+        {/* AVATAR */}
         <Avatar
           key={user._id}
-          name={user.name || "User"}
+          name={formatName(user.name)}
           size={96}
         />
 
@@ -74,7 +80,7 @@ export default function Profile() {
         <div className="flex flex-col gap-2 flex-1">
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
-              {user.name || "User"}
+              {formatName(user.name)}
             </h1>
 
             <span
@@ -119,12 +125,14 @@ export default function Profile() {
           You haven’t created any posts yet.
         </div>
       ) : (
-        <div className="
-          grid gap-6
-          sm:grid-cols-2
-          lg:grid-cols-3
-          mt-6
-        ">
+        <div
+          className="
+            grid gap-6
+            sm:grid-cols-2
+            lg:grid-cols-3
+            mt-6
+          "
+        >
           {myPosts.map((post) => (
             <PostCard
               key={post._id}

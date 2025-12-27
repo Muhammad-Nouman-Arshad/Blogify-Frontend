@@ -1,10 +1,14 @@
 // Enhanced Navbar.jsx — Ultra Clean, Animated, Premium UI
-// (React + TailwindCSS)
+// Active link: bold + gradient + underline indicator
 
 import { NavLink, useLocation } from "react-router-dom";
 import { useContext, useState, useEffect, useRef } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { HiMenu, HiX } from "react-icons/hi";
+
+// ================= NAME FORMATTER =================
+const formatName = (name = "") =>
+  name ? name.charAt(0).toUpperCase() + name.slice(1).toLowerCase() : "User";
 
 export default function Navbar() {
   const { user, logout } = useContext(AuthContext);
@@ -15,13 +19,11 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const adminMenuRef = useRef(null);
 
-  // Close menus on route change
   useEffect(() => {
     setOpenMobile(false);
     setOpenAdminMenu(false);
   }, [location.pathname]);
 
-  // Close Admin menu on outside click
   useEffect(() => {
     const close = (e) => {
       if (adminMenuRef.current && !adminMenuRef.current.contains(e.target)) {
@@ -32,25 +34,33 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", close);
   }, []);
 
-  // Navbar shadow on scroll
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // ================= ACTIVE LINK STYLE =================
   const activeLink = ({ isActive }) =>
-    `block text-[15px] font-medium transition-all duration-300
-     ${isActive ? "text-blue-600" : "text-gray-700 hover:text-blue-600"}`;
+    `
+    relative px-1 py-1 text-[15px] transition-all duration-300
+    ${
+      isActive
+        ? "font-bold text-blue-600 after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[3px] after:rounded-full after:bg-gradient-to-r after:from-blue-600 after:to-purple-600"
+        : "font-medium text-gray-700 hover:text-blue-600"
+    }
+  `;
 
-  // Avatar
+  // ================= AVATAR =================
   const Avatar = ({ name }) => {
-    const initials = name
-      ? name.split(" ").map((n) => n[0]).join("").slice(0, 2)
-      : "U";
+    const initials = formatName(name)
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2);
 
     return (
-      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 text-white flex items-center justify-center font-semibold shadow-sm">
+      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 text-white flex items-center justify-center font-semibold shadow">
         {initials}
       </div>
     );
@@ -58,20 +68,21 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 w-full z-50 backdrop-blur-xl bg-white/70 border-b transition-all
-      ${scrolled ? "shadow-lg" : "shadow"}`}
+      className={`fixed top-0 left-0 w-full z-50 backdrop-blur-xl bg-white/80 border-b transition-all ${
+        scrolled ? "shadow-lg" : "shadow-sm"
+      }`}
     >
       <div className="max-w-7xl mx-auto px-5">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
+          {/* LOGO */}
           <NavLink to="/">
             <h1 className="text-3xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">
               Blogify
             </h1>
           </NavLink>
 
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-7 text-[15px]">
+          {/* ================= DESKTOP ================= */}
+          <div className="hidden md:flex items-center gap-8">
             <NavLink to="/" className={activeLink}>Home</NavLink>
 
             {user?.role === "admin" && (
@@ -84,7 +95,7 @@ export default function Navbar() {
                 </button>
 
                 {openAdminMenu && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white shadow-xl rounded-lg border">
+                  <div className="absolute right-0 mt-2 w-56 bg-white shadow-xl rounded-xl border overflow-hidden">
                     <NavLink to="/admin" className="block px-4 py-2 hover:bg-gray-100">📊 Dashboard</NavLink>
                     <NavLink to="/admin/users" className="block px-4 py-2 hover:bg-gray-100">👥 Users</NavLink>
                     <NavLink to="/admin/posts" className="block px-4 py-2 hover:bg-gray-100">📝 Posts</NavLink>
@@ -95,12 +106,14 @@ export default function Navbar() {
             )}
 
             {user ? (
-              <div className="flex items-center gap-5">
+              <div className="flex items-center gap-6">
                 <NavLink to="/create" className={activeLink}>Create</NavLink>
 
                 <NavLink to="/profile" className="flex items-center gap-2">
                   <Avatar name={user.name} />
-                  <span>{user.name}</span>
+                  <span className="font-semibold text-gray-800">
+                    {formatName(user.name)}
+                  </span>
                 </NavLink>
 
                 <button
@@ -118,7 +131,7 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Mobile Toggle */}
+          {/* ================= MOBILE TOGGLE ================= */}
           <button
             className="md:hidden text-3xl text-gray-700"
             onClick={() => setOpenMobile((p) => !p)}
@@ -127,7 +140,7 @@ export default function Navbar() {
           </button>
         </div>
 
-        {/* ================= MOBILE MENU (UPDATED) ================= */}
+        {/* ================= MOBILE MENU ================= */}
         <div
           className={`md:hidden overflow-hidden transition-[max-height] duration-300 ${
             openMobile ? "max-h-[700px]" : "max-h-0"
@@ -135,36 +148,22 @@ export default function Navbar() {
         >
           <div className="mt-3 mx-3 rounded-2xl bg-white shadow-lg border p-4 space-y-5">
 
-            {/* User Info */}
             {user && (
               <div className="flex items-center gap-3 pb-3 border-b">
                 <Avatar name={user.name} />
                 <div>
-                  <p className="font-semibold text-gray-800">{user.name}</p>
+                  <p className="font-semibold">{formatName(user.name)}</p>
                   <p className="text-xs text-gray-500 capitalize">{user.role}</p>
                 </div>
               </div>
             )}
 
-            {/* Links */}
             <div className="space-y-3">
               <NavLink to="/" className={activeLink}>Home</NavLink>
-              {user && <NavLink to="/create" className={activeLink}>Create Post</NavLink>}
+              {user && <NavLink to="/create" className={activeLink}>Create</NavLink>}
               {user && <NavLink to="/profile" className={activeLink}>Profile</NavLink>}
             </div>
 
-            {/* Admin */}
-            {user?.role === "admin" && (
-              <div className="pt-3 border-t space-y-2">
-                <p className="text-sm font-semibold text-blue-600">Admin Panel</p>
-                <NavLink to="/admin" className="block pl-2 text-sm">📊 Dashboard</NavLink>
-                <NavLink to="/admin/users" className="block pl-2 text-sm">👥 Users</NavLink>
-                <NavLink to="/admin/posts" className="block pl-2 text-sm">📝 Posts</NavLink>
-                <NavLink to="/admin/analytics" className="block pl-2 text-sm">📈 Analytics</NavLink>
-              </div>
-            )}
-
-            {/* Auth Buttons */}
             <div className="pt-3 border-t">
               {user ? (
                 <button
@@ -186,7 +185,6 @@ export default function Navbar() {
             </div>
           </div>
         </div>
-        {/* ================= END MOBILE MENU ================= */}
       </div>
     </nav>
   );

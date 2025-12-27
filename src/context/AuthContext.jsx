@@ -1,4 +1,5 @@
 import { createContext, useState, useEffect } from "react";
+import api from "../services/api";
 import { jwtDecode } from "jwt-decode";
 
 export const AuthContext = createContext();
@@ -7,40 +8,45 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔐 Load user from token
+  // 🔄 LOAD USER ON REFRESH
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const loadUser = async () => {
+      const token = localStorage.getItem("token");
 
-    if (token) {
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
       try {
-        const decoded = jwtDecode(token);
+        // ✅ verify token (expire check)
+        jwtDecode(token);
 
-        setUser({
-          _id: decoded.id,
-          role: decoded.role,
-        });
+        // ✅ fetch FULL user (name, email, role)
+        const res = await api.get("/auth/me");
+
+        setUser(res.data);
       } catch (err) {
-        console.error("Invalid token");
+        console.error("Auth load failed");
         localStorage.removeItem("token");
         setUser(null);
+      } finally {
+        setLoading(false);
       }
-    }
+    };
 
-    setLoading(false);
+    loadUser();
   }, []);
 
-  // LOGIN
-  const login = (token) => {
+  // 🔐 LOGIN
+  const login = async (token) => {
     localStorage.setItem("token", token);
-    const decoded = jwtDecode(token);
 
-    setUser({
-      _id: decoded.id,
-      role: decoded.role,
-    });
+    const res = await api.get("/auth/me");
+    setUser(res.data);
   };
 
-  // LOGOUT
+  // 🚪 LOGOUT
   const logout = () => {
     localStorage.removeItem("token");
     setUser(null);
