@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useCallback } from "react";
 import { AuthContext } from "../context/AuthContext";
 import api from "../services/api";
 import PostCard from "../components/PostCard";
@@ -11,37 +11,39 @@ export default function Profile() {
   const [myPosts, setMyPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  // ================= FETCH USER POSTS =================
+  const fetchMyPosts = useCallback(async () => {
     if (!user?._id) return;
 
-    const fetchMyPosts = async () => {
-      try {
-        const res = await api.get("/posts");
-        const userId = user._id.toString();
+    try {
+      const res = await api.get("/posts");
+      const userId = user._id.toString();
 
-        const filtered = res.data.filter((post) => {
-          const postAuthorId =
-            typeof post.author === "object"
-              ? post.author?._id?.toString()
-              : post.author?.toString();
+      const filteredPosts = res.data.filter((post) => {
+        const authorId =
+          typeof post.author === "object"
+            ? post.author?._id?.toString()
+            : post.author?.toString();
 
-          return postAuthorId === userId;
-        });
+        return authorId === userId;
+      });
 
-        setMyPosts(filtered);
-      } catch (err) {
-        console.error("Failed to fetch posts", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMyPosts();
+      setMyPosts(filteredPosts);
+    } catch (error) {
+      console.error("Failed to fetch posts:", error);
+    } finally {
+      setLoading(false);
+    }
   }, [user]);
 
+  useEffect(() => {
+    fetchMyPosts();
+  }, [fetchMyPosts]);
+
+  // 🔒 SAFETY
   if (!user) {
     return (
-      <h1 className="text-center mt-20 text-gray-600">
+      <h1 className="text-center mt-24 text-gray-500">
         Login required
       </h1>
     );
@@ -52,49 +54,58 @@ export default function Profile() {
 
       {/* ================= PROFILE HEADER ================= */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -15 }}
         animate={{ opacity: 1, y: 0 }}
         className="
-          bg-white shadow-md rounded-2xl border border-gray-200
-          p-5 sm:p-8
-          flex flex-col sm:flex-row
-          items-center sm:items-start
-          gap-5 sm:gap-8
+          bg-white border border-gray-200
+          shadow-sm rounded-3xl
+          p-6 sm:p-8
+          flex items-center gap-6
         "
       >
-        <Avatar name={user.name} size={80} />
+        {/* ✅ AVATAR – ALWAYS RENDER */}
+        <Avatar
+          key={user._id}
+          name={user.name || "User"}
+          size={96}
+        />
 
-        <div className="w-full text-center sm:text-left">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 break-words">
-            {user.name}
-          </h1>
+        {/* USER INFO */}
+        <div className="flex flex-col gap-2 flex-1">
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+              {user.name || "User"}
+            </h1>
 
-          <p className="text-gray-600 break-all mt-1">
-            {user.email}
-          </p>
-
-          <div className="flex flex-wrap justify-center sm:justify-start items-center gap-3 mt-3 text-sm">
-            <span className="text-purple-600 font-medium">
-              {user.role === "admin"
-                ? "👑 Admin Account"
-                : "✨ Standard User"}
-            </span>
-
-            <span className="text-gray-400 hidden sm:inline">•</span>
-
-            <span className="text-gray-700 font-medium">
-              📝 {myPosts.length} Posts
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-semibold
+                ${
+                  user.role === "admin"
+                    ? "bg-purple-100 text-purple-700"
+                    : "bg-blue-100 text-blue-700"
+                }
+              `}
+            >
+              {user.role === "admin" ? "👑 Admin" : "✨ User"}
             </span>
           </div>
+
+          <p className="text-gray-500 break-all">
+            {user.email || "no-email"}
+          </p>
+
+          <p className="text-sm font-medium text-gray-700 mt-1">
+            📝 {myPosts.length} Posts
+          </p>
         </div>
       </motion.div>
 
-      {/* ================= DASHBOARD ================= */}
+      {/* ================= DASHBOARD STATS ================= */}
       <div className="mt-10">
         <DashboardStats posts={myPosts} />
       </div>
 
-      {/* ================= POSTS SECTION ================= */}
+      {/* ================= POSTS ================= */}
       <h2 className="text-xl sm:text-2xl font-semibold mt-14 mb-4">
         Your Posts
       </h2>
@@ -104,39 +115,24 @@ export default function Profile() {
           Loading posts...
         </div>
       ) : myPosts.length === 0 ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center py-12 text-gray-500"
-        >
+        <div className="text-center py-12 text-gray-500">
           You haven’t created any posts yet.
-        </motion.div>
+        </div>
       ) : (
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={{
-            visible: { transition: { staggerChildren: 0.12 } },
-          }}
-          className="
-            grid gap-6
-            sm:grid-cols-2
-            lg:grid-cols-3
-            mt-6
-          "
-        >
+        <div className="
+          grid gap-6
+          sm:grid-cols-2
+          lg:grid-cols-3
+          mt-6
+        ">
           {myPosts.map((post) => (
-            <motion.div
+            <PostCard
               key={post._id}
-              variants={{
-                hidden: { opacity: 0, y: 20 },
-                visible: { opacity: 1, y: 0 },
-              }}
-            >
-              <PostCard post={post} />
-            </motion.div>
+              post={post}
+              onUpdate={fetchMyPosts}
+            />
           ))}
-        </motion.div>
+        </div>
       )}
     </div>
   );

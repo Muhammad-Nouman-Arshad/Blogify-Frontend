@@ -31,7 +31,7 @@ const getCategoryColors = (category) => {
   return map[category] || "from-purple-500 to-pink-500";
 };
 
-export default function PostCard({ post }) {
+export default function PostCard({ post, onUpdate }) {
   const { user } = useContext(AuthContext);
   const authorName = post?.author?.name || "User";
 
@@ -39,14 +39,24 @@ export default function PostCard({ post }) {
   const [showReactions, setShowReactions] = useState(false);
   const [reactions, setReactions] = useState(post.reactions || []);
   const [myReaction, setMyReaction] = useState(
-    reactions.find((r) => r.user === user?._id)?.type
+    post.reactions?.find((r) => r.user === user?._id)?.type
   );
 
-  // 🔥 MODAL STATES
+  // COMMENTS
   const [showCommentModal, setShowCommentModal] = useState(false);
-  const [comments, setComments] = useState(post.comments || []);
+  const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState("");
   const [commentLoading, setCommentLoading] = useState(false);
+
+  // ================= LOAD COMMENTS =================
+  const loadComments = async () => {
+    try {
+      const res = await api.get(`/comments/post/${post._id}`);
+      setComments(res.data);
+    } catch {
+      toast.error("Failed to load comments");
+    }
+  };
 
   // ================= REACTION =================
   const handleReaction = async (type) => {
@@ -56,6 +66,8 @@ export default function PostCard({ post }) {
       const res = await api.post(`/posts/${post._id}/react`, { type });
       setReactions(res.data.post.reactions);
       setMyReaction(type);
+
+      onUpdate?.(); // 🔥 REFRESH PROFILE STATS
     } catch {
       toast.error("Failed to react");
     }
@@ -75,6 +87,8 @@ export default function PostCard({ post }) {
 
       setComments((prev) => [res.data.comment, ...prev]);
       setCommentText("");
+
+      onUpdate?.(); // 🔥 REFRESH PROFILE STATS
       toast.success("Comment added");
     } catch {
       toast.error("Failed to comment");
@@ -107,14 +121,9 @@ export default function PostCard({ post }) {
         animate={{ opacity: 1, y: 0 }}
         whileHover={{ scale: 1.02 }}
         transition={{ type: "spring", stiffness: 120, damping: 14 }}
-        className="
-          h-full flex flex-col rounded-3xl bg-white
-          shadow border border-gray-200
-          hover:shadow-xl transition-all
-        "
+        className="h-full flex flex-col rounded-3xl bg-white shadow border hover:shadow-xl"
       >
         <div className="p-6 flex flex-col flex-1">
-
           {/* CATEGORIES */}
           <div className="flex gap-2 mb-4">
             {(post.categories?.length ? post.categories : ["General"]).map(
@@ -132,7 +141,7 @@ export default function PostCard({ post }) {
           </div>
 
           {/* TITLE */}
-          <h2 className="text-[22px] font-extrabold text-gray-800 line-clamp-2 min-h-[56px]">
+          <h2 className="text-[22px] font-extrabold line-clamp-2 min-h-[56px]">
             {post.title}
           </h2>
 
@@ -155,8 +164,7 @@ export default function PostCard({ post }) {
           {/* ACTIONS */}
           <div className="mt-auto">
             <div className="flex justify-between border-t pt-4 mt-4 text-sm">
-
-              {/* LIKE */}
+              {/* REACTION */}
               <div
                 onMouseEnter={() => setShowReactions(true)}
                 onMouseLeave={() => setShowReactions(false)}
@@ -195,8 +203,11 @@ export default function PostCard({ post }) {
 
               {/* COMMENT */}
               <button
-                onClick={() => setShowCommentModal(true)}
-                className="flex items-center gap-1 text-gray-600 hover:text-blue-600"
+                onClick={() => {
+                  setShowCommentModal(true);
+                  loadComments();
+                }}
+                className="flex items-center gap-1 hover:text-blue-600"
               >
                 <MessageCircle className="w-4 h-4" /> Comment
               </button>
@@ -204,13 +215,12 @@ export default function PostCard({ post }) {
               {/* SHARE */}
               <button
                 onClick={handleShare}
-                className="flex items-center gap-1 text-gray-600 hover:text-purple-600"
+                className="flex items-center gap-1 hover:text-purple-600"
               >
                 <Share2 className="w-4 h-4" /> Share
               </button>
             </div>
 
-            {/* READ MORE */}
             <Link
               to={`/post/${post._id}`}
               className="mt-4 block w-full text-center py-3 rounded-xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 text-white"
@@ -236,10 +246,9 @@ export default function PostCard({ post }) {
               exit={{ scale: 0.9 }}
               className="bg-white w-full max-w-md rounded-2xl p-6 relative"
             >
-              {/* CLOSE */}
               <button
                 onClick={() => setShowCommentModal(false)}
-                className="absolute top-3 right-3 text-gray-500 hover:text-black"
+                className="absolute top-3 right-3"
               >
                 <X />
               </button>
@@ -247,8 +256,8 @@ export default function PostCard({ post }) {
               <h3 className="text-xl font-bold mb-4">Comments</h3>
 
               <div className="space-y-2 max-h-48 overflow-y-auto mb-4">
-                {comments.map((c, i) => (
-                  <div key={i} className="text-sm bg-gray-100 p-2 rounded-lg">
+                {comments.map((c) => (
+                  <div key={c._id} className="text-sm bg-gray-100 p-2 rounded">
                     <strong>{c.user?.name}:</strong> {c.text}
                   </div>
                 ))}
