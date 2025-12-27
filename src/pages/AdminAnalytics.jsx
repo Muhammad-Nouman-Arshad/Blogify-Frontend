@@ -2,7 +2,18 @@
 
 import { useEffect, useState } from "react";
 import api from "../services/api";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line } from "recharts";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  LineChart,
+  Line,
+} from "recharts";
 import { format, parse } from "date-fns";
 import Loader from "../components/Loader";
 import { motion } from "framer-motion";
@@ -16,21 +27,15 @@ export default function AdminAnalytics() {
     const load = async () => {
       try {
         setLoading(true);
-        const res = await api.get("/admin/analytics"); // protected
-        // res.data: { months: [...], posts: [...], users: [...] }
+        const res = await api.get("/admin/analytics");
         const { months, posts, users } = res.data;
 
-        // Build combined data array: [{ label: 'Dec 2024', posts: 5, users: 2 }, ...]
         const data = months.map((m, idx) => {
-          // m is "yyyy-MM" format
           let label = m;
           try {
-            // nicer label like "Dec '24"
             const parsed = parse(m + "-01", "yyyy-MM-dd", new Date());
-            label = format(parsed, "MMM yy"); // e.g., "Dec 24"
-          } catch (e) {
-            /* ignore */
-          }
+            label = format(parsed, "MMM yy");
+          } catch {}
 
           return {
             month: label,
@@ -54,54 +59,73 @@ export default function AdminAnalytics() {
   if (loading) return <Loader />;
 
   return (
-    <div className="py-10">
-      <motion.h1 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="text-3xl font-bold mb-6">
+    <div className="py-10 px-2 sm:px-0">
+      {/* HEADER */}
+      <motion.h1
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-3xl font-bold mb-2"
+      >
         Analytics & Growth
       </motion.h1>
 
-      <p className="text-gray-600 mb-6">Last 12 months — posts created and new users registered.</p>
+      <p className="text-gray-600 mb-8">
+        Last 12 months — posts created & new users registered
+      </p>
 
-      {/* Top area: two charts side-by-side on wide screens */}
-      <div className="grid md:grid-cols-2 gap-6">
+      {/* CHARTS */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* POSTS CHART */}
+        <div className="bg-white rounded-2xl shadow p-5 overflow-hidden">
+          <h3 className="font-semibold mb-4">Posts per month</h3>
 
-        {/* Posts per month (Bar) */}
-        <div className="bg-white rounded-lg shadow p-4">
-          <h3 className="font-semibold mb-2">Posts per month</h3>
-          <div style={{ width: "100%", height: 300 }}>
-            <ResponsiveContainer>
-              <BarChart data={chartData} margin={{ top: 10, right: 20, left: -10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="posts" name="Posts" fill="#7c3aed" radius={[6,6,0,0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          {/* ✅ FIXED HEIGHT */}
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis allowDecimals={false} />
+              <Tooltip />
+              <Legend />
+              <Bar
+                dataKey="posts"
+                name="Posts"
+                fill="#7c3aed"
+                radius={[6, 6, 0, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
 
-        {/* Users growth (Line) */}
-        <div className="bg-white rounded-lg shadow p-4">
-          <h3 className="font-semibold mb-2">New users per month</h3>
-          <div style={{ width: "100%", height: 300 }}>
-            <ResponsiveContainer>
-              <LineChart data={chartData} margin={{ top: 10, right: 20, left: -10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="users" name="New Users" stroke="#06b6d4" strokeWidth={3} dot={{ r: 4 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+        {/* USERS CHART */}
+        <div className="bg-white rounded-2xl shadow p-5 overflow-hidden">
+          <h3 className="font-semibold mb-4">New users per month</h3>
+
+          {/* ✅ FIXED HEIGHT */}
+          <ResponsiveContainer width="100%" height={320}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis allowDecimals={false} />
+              <Tooltip />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="users"
+                name="New Users"
+                stroke="#06b6d4"
+                strokeWidth={3}
+                dot={{ r: 4 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
-      {/* Bottom area: simple table for exact numbers (optional) */}
-      <div className="mt-6 bg-white rounded-lg shadow p-4">
-        <h3 className="font-semibold mb-3">Numbers (exact)</h3>
+      {/* TABLE */}
+      <div className="mt-8 bg-white rounded-2xl shadow p-5">
+        <h3 className="font-semibold mb-4">Exact numbers</h3>
+
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-100 text-gray-700">

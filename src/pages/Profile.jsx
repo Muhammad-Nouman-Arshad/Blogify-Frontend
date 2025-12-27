@@ -7,9 +7,20 @@ import DashboardStats from "../components/DashboardStats";
 import { motion } from "framer-motion";
 
 // ================= NAME FORMATTER =================
+// Converts: "muhammad nouman arshad" → "Muhammad Nouman Arshad"
 const formatName = (name = "") => {
   if (!name) return "User";
-  return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+
+  return name
+    .trim()
+    .split(" ")
+    .filter(Boolean)
+    .map(
+      (word) =>
+        word.charAt(0).toUpperCase() +
+        word.slice(1).toLowerCase()
+    )
+    .join(" ");
 };
 
 export default function Profile() {
@@ -46,7 +57,7 @@ export default function Profile() {
     fetchMyPosts();
   }, [fetchMyPosts]);
 
-  // 🔒 SAFETY
+  // 🔒 SAFETY CHECK
   if (!user) {
     return (
       <h1 className="text-center mt-24 text-gray-500">
@@ -62,6 +73,7 @@ export default function Profile() {
       <motion.div
         initial={{ opacity: 0, y: -15 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
         className="
           bg-white border border-gray-200
           shadow-sm rounded-3xl
