@@ -13,20 +13,18 @@ export default function Navbar() {
   const [openAdminMenu, setOpenAdminMenu] = useState(false);
   const adminRef = useRef(null);
 
-  // ---------------- NAME FORMAT ----------------
+  // ---------- NAME FORMAT ----------
   const formatName = (name = "User") =>
     name
       .trim()
       .split(" ")
       .filter(Boolean)
       .map(
-        (word) =>
-          word.charAt(0).toUpperCase() +
-          word.slice(1).toLowerCase()
+        (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
       )
       .join(" ");
 
-  // ---------------- AVATAR ----------------
+  // ---------- AVATAR ----------
   const Avatar = ({ name }) => {
     const initials = name
       ? name
@@ -44,30 +42,29 @@ export default function Navbar() {
     );
   };
 
-  // ---------------- ACTIVE LINKS ----------------
+  // ---------- LINK STYLES ----------
   const desktopLink = ({ isActive }) =>
     `relative px-1 py-2 text-[15px] font-medium transition-colors
      ${isActive ? "text-blue-600" : "text-gray-700 hover:text-blue-600"}
      after:content-[''] after:absolute after:left-0 after:-bottom-1
-     after:h-[2px] after:w-full after:rounded-full after:bg-blue-600
+     after:h-[2px] after:w-full after:bg-blue-600 after:rounded-full
      after:scale-x-0 after:origin-left after:transition-transform
      ${isActive ? "after:scale-x-100" : "hover:after:scale-x-100"}`;
 
   const mobileLink = ({ isActive }) =>
-    `block px-3 py-2 rounded-lg transition font-medium
+    `block px-3 py-2 rounded-lg font-medium transition
      ${
        isActive
          ? "bg-blue-50 text-blue-600 border-l-4 border-blue-600"
          : "text-gray-700 hover:bg-gray-100"
      }`;
 
-  // Close menus on route change
+  // ---------- EFFECTS ----------
   useEffect(() => {
     setOpenMobile(false);
     setOpenAdminMenu(false);
   }, [location.pathname]);
 
-  // Close admin menu on outside click
   useEffect(() => {
     const close = (e) => {
       if (adminRef.current && !adminRef.current.contains(e.target)) {
@@ -93,36 +90,37 @@ export default function Navbar() {
               Home
             </NavLink>
 
-            {user?.role === "admin" && (
-              <div className="relative" ref={adminRef}>
-                <button
-                  onClick={() => setOpenAdminMenu((p) => !p)}
-                  className="px-4 py-1.5 rounded-lg bg-blue-600 text-white text-sm"
-                >
-                  Admin ▾
-                </button>
+            {/* ---------- AUTHED USER ---------- */}
+            {user ? (
+              <>
+                {user.role === "admin" && (
+                  <div className="relative" ref={adminRef}>
+                    <button
+                      onClick={() => setOpenAdminMenu((p) => !p)}
+                      className="px-4 py-1.5 rounded-lg bg-blue-600 text-white text-sm"
+                    >
+                      Admin ▾
+                    </button>
 
-                {openAdminMenu && (
-                  <div className="absolute right-0 mt-2 w-52 bg-white border rounded-xl shadow-lg overflow-hidden">
-                    <NavLink to="/admin" end className="block px-4 py-2 hover:bg-gray-100">
-                      📊 Dashboard
-                    </NavLink>
-                    <NavLink to="/admin/users" className="block px-4 py-2 hover:bg-gray-100">
-                      👥 Users
-                    </NavLink>
-                    <NavLink to="/admin/posts" className="block px-4 py-2 hover:bg-gray-100">
-                      📝 Posts
-                    </NavLink>
-                    <NavLink to="/admin/analytics" className="block px-4 py-2 hover:bg-gray-100">
-                      📈 Analytics
-                    </NavLink>
+                    {openAdminMenu && (
+                      <div className="absolute right-0 mt-2 w-52 bg-white border rounded-xl shadow-lg overflow-hidden">
+                        <NavLink to="/admin" end className="block px-4 py-2 hover:bg-gray-100">
+                          📊 Dashboard
+                        </NavLink>
+                        <NavLink to="/admin/users" className="block px-4 py-2 hover:bg-gray-100">
+                          👥 Users
+                        </NavLink>
+                        <NavLink to="/admin/posts" className="block px-4 py-2 hover:bg-gray-100">
+                          📝 Posts
+                        </NavLink>
+                        <NavLink to="/admin/analytics" className="block px-4 py-2 hover:bg-gray-100">
+                          📈 Analytics
+                        </NavLink>
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
-            )}
 
-            {user && (
-              <>
                 <NavLink to="/create" className={desktopLink}>
                   Create
                 </NavLink>
@@ -135,9 +133,7 @@ export default function Navbar() {
                   }
                 >
                   <Avatar name={user.name} />
-                  <span className="font-medium">
-                    {formatName(user.name)}
-                  </span>
+                  <span>{formatName(user.name)}</span>
                 </NavLink>
 
                 <button
@@ -147,10 +143,20 @@ export default function Navbar() {
                   Logout
                 </button>
               </>
+            ) : (
+              /* ---------- GUEST ---------- */
+              <>
+                <NavLink to="/login" className={desktopLink}>
+                  Login
+                </NavLink>
+                <NavLink to="/register" className={desktopLink}>
+                  Register
+                </NavLink>
+              </>
             )}
           </div>
 
-          {/* ================= MOBILE BUTTON ================= */}
+          {/* ================= MOBILE TOGGLE ================= */}
           <button
             className="md:hidden text-3xl"
             onClick={() => setOpenMobile((p) => !p)}
@@ -162,43 +168,47 @@ export default function Navbar() {
         {/* ================= MOBILE MENU ================= */}
         <div
           className={`md:hidden transition-all duration-300 overflow-hidden ${
-            openMobile ? "max-h-[700px]" : "max-h-0"
+            openMobile ? "max-h-[800px]" : "max-h-0"
           }`}
         >
           <div className="mt-4 bg-white border rounded-2xl shadow-lg p-4 space-y-4">
-            {user && (
-              <div className="flex items-center gap-3 pb-3 border-b">
-                <Avatar name={user.name} />
-                <div>
-                  <p className="font-semibold">{formatName(user.name)}</p>
-                  <p className="text-xs text-gray-500 capitalize">
-                    {user.role}
-                  </p>
+            {user ? (
+              <>
+                <div className="flex items-center gap-3 pb-3 border-b">
+                  <Avatar name={user.name} />
+                  <div>
+                    <p className="font-semibold">{formatName(user.name)}</p>
+                    <p className="text-xs text-gray-500 capitalize">{user.role}</p>
+                  </div>
                 </div>
-              </div>
-            )}
 
-            <NavLink to="/" className={mobileLink}>Home</NavLink>
-            {user && <NavLink to="/create" className={mobileLink}>Create</NavLink>}
-            {user && <NavLink to="/profile" className={mobileLink}>Profile</NavLink>}
+                <NavLink to="/" className={mobileLink}>Home</NavLink>
+                <NavLink to="/create" className={mobileLink}>Create</NavLink>
+                <NavLink to="/profile" className={mobileLink}>Profile</NavLink>
 
-            {user?.role === "admin" && (
-              <div className="pt-3 border-t space-y-2">
-                <p className="text-sm font-semibold text-blue-600">Admin Panel</p>
-                <NavLink to="/admin" end className={mobileLink}>📊 Dashboard</NavLink>
-                <NavLink to="/admin/users" className={mobileLink}>👥 Users</NavLink>
-                <NavLink to="/admin/posts" className={mobileLink}>📝 Posts</NavLink>
-                <NavLink to="/admin/analytics" className={mobileLink}>📈 Analytics</NavLink>
-              </div>
-            )}
+                {user.role === "admin" && (
+                  <div className="pt-3 border-t space-y-2">
+                    <p className="text-sm font-semibold text-blue-600">Admin Panel</p>
+                    <NavLink to="/admin" end className={mobileLink}>📊 Dashboard</NavLink>
+                    <NavLink to="/admin/users" className={mobileLink}>👥 Users</NavLink>
+                    <NavLink to="/admin/posts" className={mobileLink}>📝 Posts</NavLink>
+                    <NavLink to="/admin/analytics" className={mobileLink}>📈 Analytics</NavLink>
+                  </div>
+                )}
 
-            {user && (
-              <button
-                onClick={logout}
-                className="w-full bg-red-500 text-white py-2 rounded-xl"
-              >
-                Logout
-              </button>
+                <button
+                  onClick={logout}
+                  className="w-full bg-red-500 text-white py-2 rounded-xl"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <NavLink to="/" className={mobileLink}>Home</NavLink>
+                <NavLink to="/login" className={mobileLink}>Login</NavLink>
+                <NavLink to="/register" className={mobileLink}>Register</NavLink>
+              </>
             )}
           </div>
         </div>
