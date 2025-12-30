@@ -7,6 +7,17 @@ import api from "../services/api";
 import { AuthContext } from "../context/AuthContext";
 import toast from "react-hot-toast";
 
+// ================= NAME FORMATTER =================
+const formatName = (name = "User") =>
+  name
+    .trim()
+    .split(" ")
+    .filter(Boolean)
+    .map(
+      (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    )
+    .join(" ");
+
 // ================= REACTIONS CONFIG =================
 const REACTIONS = [
   { type: "like", emoji: "👍" },
@@ -33,7 +44,9 @@ const getCategoryColors = (category) => {
 
 export default function PostCard({ post, onUpdate }) {
   const { user } = useContext(AuthContext);
-  const authorName = post?.author?.name || "User";
+
+  // ✅ FORMATTED AUTHOR NAME
+  const authorName = formatName(post?.author?.name);
 
   // ================= STATES =================
   const [showReactions, setShowReactions] = useState(false);
@@ -66,8 +79,7 @@ export default function PostCard({ post, onUpdate }) {
       const res = await api.post(`/posts/${post._id}/react`, { type });
       setReactions(res.data.post.reactions);
       setMyReaction(type);
-
-      onUpdate?.(); // 🔥 REFRESH PROFILE STATS
+      onUpdate?.();
     } catch {
       toast.error("Failed to react");
     }
@@ -80,15 +92,13 @@ export default function PostCard({ post, onUpdate }) {
 
     try {
       setCommentLoading(true);
-
       const res = await api.post(`/comments/post/${post._id}`, {
         text: commentText,
       });
 
       setComments((prev) => [res.data.comment, ...prev]);
       setCommentText("");
-
-      onUpdate?.(); // 🔥 REFRESH PROFILE STATS
+      onUpdate?.();
       toast.success("Comment added");
     } catch {
       toast.error("Failed to comment");
@@ -258,7 +268,7 @@ export default function PostCard({ post, onUpdate }) {
               <div className="space-y-2 max-h-48 overflow-y-auto mb-4">
                 {comments.map((c) => (
                   <div key={c._id} className="text-sm bg-gray-100 p-2 rounded">
-                    <strong>{c.user?.name}:</strong> {c.text}
+                    <strong>{formatName(c.user?.name)}:</strong> {c.text}
                   </div>
                 ))}
               </div>
