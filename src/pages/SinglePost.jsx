@@ -7,6 +7,7 @@ import Avatar from "../components/Avatar";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { Pencil, Trash2, Share2 } from "lucide-react";
+import { formatName } from "../utils/formatName"; // ✅ FIX
 
 export default function SinglePost() {
   const { id } = useParams();
@@ -156,9 +157,11 @@ export default function SinglePost() {
         {/* ================= AUTHOR + ACTIONS ================= */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-6">
           <div className="flex items-center gap-3 text-gray-600">
-            <Avatar name={post.author?.name} size={40} />
+            <Avatar name={formatName(post.author?.name)} size={40} />
             <div className="text-sm">
-              <p className="font-semibold">{post.author?.name}</p>
+              <p className="font-semibold">
+                {formatName(post.author?.name)}
+              </p>
               <p>{new Date(post.createdAt).toLocaleDateString()}</p>
             </div>
           </div>
@@ -259,9 +262,9 @@ export default function SinglePost() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Avatar name={c.user?.name} size={32} />
+                      <Avatar name={formatName(c.user?.name)} size={32} />
                       <p className="font-semibold text-sm">
-                        {c.user?.name}
+                        {formatName(c.user?.name)}
                       </p>
                     </div>
 
